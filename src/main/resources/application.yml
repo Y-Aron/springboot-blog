@@ -1,0 +1,147 @@
+server:
+  port: 8888
+
+druid: &druid
+  filters: stat,wall,log4j2
+  # 配置初始化大小、最小、最大
+  initial-size: 1
+  min-idle: 1
+  max-active: 20
+  # 配置获取连接等待超时的时间
+  max-wait: 60000
+  # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+  time-between-eviction-runs-millis: 60000
+  # 配置一个连接在池中最小生存的时间，单位是毫秒
+  min-evictable-idle-time-millis: 300000
+  # 用来检测连接是否有效的sql，要求是一个查询语句。如果validationQuery为null，testOnBorrow、testOnReturn、testWhileIdle都不会其作用。
+  validation-query: select 'x'
+  # 建议配置为true，不影响性能，并且保证安全性。申请连接的时候检测，如果空闲时间大于timeBetweenEvictionRunsMillis，执行validationQuery检测连接是否有效。
+  test-while-idle: true
+  # 申请连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能。
+  test-on-borrow: false
+  # 归还连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能
+  test-on-return: false
+  # oracle开启 mysql建议关闭
+  pool-prepared-statements: true
+  max-open-prepared-statements: 20
+
+# JDBC 配置
+jdbc: &jdbc
+  url: jdbc:mysql://localhost:3306/test
+  username: root
+  password: admin
+  driver-class-name: com.mysql.jdbc.Driver
+  # druid数据库连接池
+  type: com.alibaba.druid.pool.DruidDataSource
+
+# redis 配置
+redis: &redis
+  # Redis服务器地址
+  host: localhost
+  # Redis服务器连接端口
+  port: 6379
+  # Redis服务器连接密码（默认为空）
+  password:
+  # 连接超时时间（毫秒）
+  timeout: 10000
+  # Redis默认情况下有16个分片，这里配置具体使用的分片
+  database: 0
+  # redis lettuce pool
+  lettuce:
+    pool:
+      # 连接池最大连接数（使用负值表示没有限制） 默认 8
+      max-active: 10
+      # 连接池最大阻塞等待时间（使用负值表示没有限制） 默认 -1
+      max-wait: -1
+      # 连接池中的最大空闲连接 默认 8
+      max-idle: 5
+      # 连接池中的最小空闲连接 默认 0
+      min-idle: 1
+
+# mongodb 配置
+mongodb:
+  url: mongodb://:@localhost:27017/test
+  # 客户端的连接数
+  connections-per-host: 10
+  # 客户端最小连接数
+  min-connections-per-host: 10
+
+
+# JavaMailSender 邮件发送的配置
+mail: &mail
+  host: smtp.qq.com
+  username: 1249205951@qq.com
+  password: fbkmsipsjzudiaha
+  properties:
+    mail:
+      smtp:
+        auth: true
+        starttls:
+          enable: true
+          required: true
+
+# Elasticsearch
+
+elasticsearch:
+  cluster:
+    name: my-application
+#  ip: 127.0.0.1
+  ip: 47.107.42.56
+  port: 9200
+  pool:
+    size: 5
+
+# spring 配置
+spring:
+  <<: *redis
+  mail:
+    <<: *mail
+
+  datasource:
+    <<: *jdbc
+    <<: *druid
+
+  # 一般来说是不用配置的，Spring Cache 会根据依赖的包自行装配
+  cache:
+    type: redis
+
+  #出现错误时, 直接抛出异常(便于异常统一处理，否则捕获不到404)
+  mvc:
+    throw-exception-if-no-handler-found: true
+
+  #不要为我们工程中的资源文件建立映射
+  resources:
+    add-mappings: false
+
+# 驼峰命名规范 如：数据库字段是  order_id 那么 实体字段就要写成 orderId
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+
+# 容联云通讯短信验证码
+ronglian: &ronglian
+  accountSid: 8aaf0708624670f2016265f7a2dc0b6e
+  accountToken: ba53a365477640c7a4c05c8ac62a13bc
+  serverIp: app.cloopen.com
+  serverPort: 8883
+  appId: 8aaf0708624670f2016265f7a3330b74
+  templateCode: 1
+
+# 个人配置
+user:
+  # 短信验证码
+  smsCode:
+    ronglian:
+      <<: *ronglian
+    #短信验证码失效时间（单位分钟）
+    expires: 3
+    #短信验证码长度
+    smsCodelen: 6
+  smsService:
+    component: ronglianService
+
+jwt:
+  timeout: 1800
+  secret: yangwenjie
+  token-header: authorization
+  token-holder: 'Bearer '
